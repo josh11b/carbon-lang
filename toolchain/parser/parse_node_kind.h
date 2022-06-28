@@ -2,12 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_PARSER_PARSE_NODE_KIND_H_
-#define TOOLCHAIN_PARSER_PARSE_NODE_KIND_H_
+#ifndef CARBON_TOOLCHAIN_PARSER_PARSE_NODE_KIND_H_
+#define CARBON_TOOLCHAIN_PARSER_PARSE_NODE_KIND_H_
 
 #include <cstdint>
 #include <iterator>
 
+#include "common/ostream.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon {
@@ -60,6 +61,8 @@ class ParseNodeKind {
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr operator KindEnum() const { return kind_; }
 
+  void Print(llvm::raw_ostream& out) const { out << name(); }
+
  private:
   constexpr explicit ParseNodeKind(KindEnum k) : kind_(k) {}
 
@@ -71,4 +74,4 @@ static_assert(sizeof(ParseNodeKind) == 1, "Kind objects include padding!");
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_PARSER_PARSE_NODE_KIND_H_
+#endif  // CARBON_TOOLCHAIN_PARSER_PARSE_NODE_KIND_H_

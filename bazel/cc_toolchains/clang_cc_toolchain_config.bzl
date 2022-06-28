@@ -128,9 +128,6 @@ def _impl(ctx):
                             "-Wctad-maybe-unsupported",
                             # Unfortunately, LLVM isn't clean for this warning.
                             "-Wno-unused-parameter",
-                            # We use partial sets of designated initializers in
-                            # test code.
-                            "-Wno-missing-field-initializers",
                             # Compile actions shouldn't link anything.
                             "-c",
                         ],
@@ -269,14 +266,27 @@ def _impl(ctx):
     # both are enabled.
     minimal_optimization_flags = feature(
         name = "minimal_optimization_flags",
-        flag_sets = [flag_set(
-            actions = codegen_compile_actions,
-            flag_groups = [flag_group(flags = [
-                "-O1",
-                "-mllvm",
-                "-fast-isel",
-            ])],
-        )],
+        flag_sets = [
+            flag_set(
+                actions = codegen_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-O1",
+                ])],
+            ),
+            # Use a conditional flag set for enabling the fast instruction
+            # selector to work around an LLVM bug:
+            # https://github.com/llvm/llvm-project/issues/56133
+            flag_set(
+                actions = codegen_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-mllvm",
+                    "-fast-isel",
+                ])],
+                with_features = [
+                    with_feature_set(not_features = ["fuzzer"]),
+                ],
+            ),
+        ],
     )
     default_optimization_flags = feature(
         name = "default_optimization_flags",
@@ -485,6 +495,17 @@ def _impl(ctx):
         )],
     )
 
+    proto_fuzzer = feature(
+        name = "proto-fuzzer",
+        enabled = False,
+        requires = [feature_set(["nonhost"])],
+
+        # TODO: this should really be `fuzzer`, but `-fsanitize=fuzzer` triggers
+        # a clang crash when running `bazel test --config=fuzzer ...`. See
+        # https://github.com/carbon-language/carbon-lang/issues/1173
+        implies = ["asan"],
+    )
+
     linux_flags_feature = feature(
         name = "linux_flags",
         enabled = True,
@@ -531,7 +552,12 @@ def _impl(ctx):
                     "-D_LIBCPP_DEBUG=1",
                 ])],
                 with_features = [
-                    with_feature_set(not_features = ["opt"]),
+                    # _LIBCPP_DEBUG=1 causes protobuf code to crash when linked
+                    # with `-fsanitize=fuzzer`, possibly because of ODR
+                    # violations caused by Carbon source and pre-compiled llvm
+                    # Fuzzer driver library built with different _LIBCPP_DEBUG
+                    # values.
+                    with_feature_set(not_features = ["opt", "proto-fuzzer"]),
                 ],
             ),
         ],
@@ -754,6 +780,7 @@ def _impl(ctx):
         asan,
         enable_asan_in_fastbuild,
         fuzzer,
+        proto_fuzzer,
         layering_check,
         module_maps,
         use_module_maps,

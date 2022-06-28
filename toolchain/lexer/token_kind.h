@@ -2,13 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_LEXER_TOKEN_KIND_H_
-#define TOOLCHAIN_LEXER_TOKEN_KIND_H_
+#ifndef CARBON_TOOLCHAIN_LEXER_TOKEN_KIND_H_
+#define CARBON_TOOLCHAIN_LEXER_TOKEN_KIND_H_
 
 #include <cstdint>
 #include <initializer_list>
 #include <iterator>
 
+#include "common/ostream.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon {
@@ -99,6 +100,9 @@ class TokenKind {
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr operator KindEnum() const { return kind_value_; }
 
+  // Prints the TokenKind, typically for diagnostics.
+  void Print(llvm::raw_ostream& out) const { out << GetFixedSpelling(); }
+
  private:
   constexpr explicit TokenKind(KindEnum kind_value) : kind_value_(kind_value) {}
 
@@ -107,4 +111,4 @@ class TokenKind {
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_LEXER_TOKEN_KIND_H_
+#endif  // CARBON_TOOLCHAIN_LEXER_TOKEN_KIND_H_

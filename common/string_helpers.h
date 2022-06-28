@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef COMMON_STRING_HELPERS_H_
-#define COMMON_STRING_HELPERS_H_
+#ifndef CARBON_COMMON_STRING_HELPERS_H_
+#define CARBON_COMMON_STRING_HELPERS_H_
 
 #include <optional>
 #include <string>
@@ -19,11 +19,13 @@ namespace Carbon {
 // Unescapes Carbon escape sequences in the source string. Returns std::nullopt
 // on bad input. `is_block_string` enables escaping unique to block string
 // literals, such as \<newline>.
-auto UnescapeStringLiteral(llvm::StringRef source, bool is_block_string = false)
+auto UnescapeStringLiteral(llvm::StringRef source, int hashtag_num = 0,
+                           bool is_block_string = false)
     -> std::optional<std::string>;
 
 // Parses a block string literal in `source`.
-auto ParseBlockStringLiteral(llvm::StringRef source) -> ErrorOr<std::string>;
+auto ParseBlockStringLiteral(llvm::StringRef source, int hashtag_num = 0)
+    -> ErrorOr<std::string>;
 
 // Returns true if the pointer is in the string ref (including equality with
 // `ref.end()`). This should be used instead of `<=` comparisons for
@@ -32,4 +34,4 @@ auto StringRefContainsPointer(llvm::StringRef ref, const char* ptr) -> bool;
 
 }  // namespace Carbon
 
-#endif  // COMMON_STRING_HELPERS_H_
+#endif  // CARBON_COMMON_STRING_HELPERS_H_

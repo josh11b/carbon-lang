@@ -341,7 +341,7 @@ TEST_F(ParseTreeTest, FunctionDeclarationSkipIndentedNewlineUntilOutdent) {
 }
 
 TEST_F(ParseTreeTest, FunctionDeclarationSkipWithoutSemiToCurly) {
-  // FIXME: We don't have a grammar construct that uses curlies yet so this just
+  // TODO: We don't have a grammar construct that uses curlies yet so this just
   // won't parse at all. Once it does, we should ensure that the close brace
   // gets properly parsed for the struct (or whatever other curly-braced syntax
   // we have grouping function declarations) despite the invalid function
@@ -660,12 +660,12 @@ TEST_F(ParseTreeTest, OperatorWhitespaceErrors) {
       {"var n: i8 = (n)*3;", Valid},
       {"var n: i8 = 3*(n);", Valid},
       {"var n: i8 = n *n;", Recovered},
-      // FIXME: We could figure out that this first Failed example is infix
+      // TODO: We could figure out that this first Failed example is infix
       // with one-token lookahead.
       {"var n: i8 = n* n;", Failed},
       {"var n: i8 = n* -n;", Failed},
       {"var n: i8 = n* *p;", Failed},
-      // FIXME: We try to form (n*)*p and reject due to missing parentheses
+      // TODO: We try to form (n*)*p and reject due to missing parentheses
       // before we notice the missing whitespace around the second `*`.
       // It'd be better to (somehow) form n*(*p) and reject due to the missing
       // whitespace around the first `*`.
@@ -1120,36 +1120,37 @@ TEST_F(ParseTreeTest, StructErrors) {
   };
   Testcase testcases[] = {
       {"var x: {i32} = {};",
-       DiagnosticMessage("Expected `.field: type` or `.field = value`.")},
+       IsDiagnosticMessage("Expected `.field: type` or `.field = value`.")},
       {"var x: {a} = {};",
-       DiagnosticMessage("Expected `.field: type` or `.field = value`.")},
+       IsDiagnosticMessage("Expected `.field: type` or `.field = value`.")},
       {"var x: {a:} = {};",
-       DiagnosticMessage("Expected `.field: type` or `.field = value`.")},
+       IsDiagnosticMessage("Expected `.field: type` or `.field = value`.")},
       {"var x: {a=} = {};",
-       DiagnosticMessage("Expected `.field: type` or `.field = value`.")},
-      {"var x: {.} = {};", DiagnosticMessage("Expected identifier after `.`.")},
+       IsDiagnosticMessage("Expected `.field: type` or `.field = value`.")},
+      {"var x: {.} = {};",
+       IsDiagnosticMessage("Expected identifier after `.`.")},
       {"var x: {.\"hello\" = 0, .y = 4} = {};",
-       DiagnosticMessage("Expected identifier after `.`.")},
+       IsDiagnosticMessage("Expected identifier after `.`.")},
       {"var x: {.\"hello\": i32, .y: i32} = {};",
-       DiagnosticMessage("Expected identifier after `.`.")},
+       IsDiagnosticMessage("Expected identifier after `.`.")},
       {"var x: {.a} = {};",
-       DiagnosticMessage("Expected `.field: type` or `.field = value`.")},
-      {"var x: {.a:} = {};", DiagnosticMessage("Expected expression.")},
-      {"var x: {.a=} = {};", DiagnosticMessage("Expected expression.")},
+       IsDiagnosticMessage("Expected `.field: type` or `.field = value`.")},
+      {"var x: {.a:} = {};", IsDiagnosticMessage("Expected expression.")},
+      {"var x: {.a=} = {};", IsDiagnosticMessage("Expected expression.")},
       {"var x: {.a: i32, .b = 0} = {};",
-       DiagnosticMessage("Expected `.field: type`.")},
+       IsDiagnosticMessage("Expected `.field: type`.")},
       {"var x: {.a = 0, b: i32} = {};",
-       DiagnosticMessage("Expected `.field = value`.")},
+       IsDiagnosticMessage("Expected `.field = value`.")},
       {"var x: {,} = {};",
-       DiagnosticMessage("Expected `.field: type` or `.field = value`.")},
+       IsDiagnosticMessage("Expected `.field: type` or `.field = value`.")},
       {"var x: {.a: i32,,} = {};",
-       DiagnosticMessage("Expected `.field: type`.")},
+       IsDiagnosticMessage("Expected `.field: type`.")},
       {"var x: {.a = 0,,} = {};",
-       DiagnosticMessage("Expected `.field = value`.")},
+       IsDiagnosticMessage("Expected `.field = value`.")},
       {"var x: {.a: i32 banana} = {.a = 0};",
-       DiagnosticMessage("Expected `,` or `}`.")},
+       IsDiagnosticMessage("Expected `,` or `}`.")},
       {"var x: {.a: i32} = {.a = 0 banana};",
-       DiagnosticMessage("Expected `,` or `}`.")},
+       IsDiagnosticMessage("Expected `,` or `}`.")},
   };
 
   for (const Testcase& testcase : testcases) {
@@ -1268,10 +1269,10 @@ TEST_F(ParseTreeTest, RecursionLimit) {
   // Recursion might be exceeded multiple times due to quirks in parse tree
   // handling; we only need to be sure it's hit at least once for test
   // correctness.
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(DiagnosticMessage(llvm::formatv(
-          "Exceeded recursion limit ({0})", ParseTree::StackDepthLimit))))
+  EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnosticMessage(
+                            llvm::formatv("Exceeded recursion limit ({0})",
+                                          ParseTree::StackDepthLimit)
+                                .str())))
       .Times(AtLeast(1));
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.has_errors());

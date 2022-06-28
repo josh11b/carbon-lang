@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_PARSER_PARSE_TREE_H_
-#define TOOLCHAIN_PARSER_PARSE_TREE_H_
+#ifndef CARBON_TOOLCHAIN_PARSER_PARSE_TREE_H_
+#define CARBON_TOOLCHAIN_PARSER_PARSE_TREE_H_
 
 #include <iterator>
 
@@ -93,6 +93,8 @@ class ParseTree {
 
   // Returns the token the given parse tree node models.
   [[nodiscard]] auto node_token(Node n) const -> TokenizedBuffer::Token;
+
+  [[nodiscard]] auto node_subtree_size(Node n) const -> int32_t;
 
   // Returns the text backing the token for the given node.
   //
@@ -253,7 +255,7 @@ class ParseTree::Node {
   // Returns an opaque integer identifier of the node in the tree. Clients
   // should not expect any particular semantics from this value.
   //
-  // FIXME: Maybe we can switch to stream operator overloads?
+  // TODO: Maybe we can switch to stream operator overloads?
   [[nodiscard]] auto index() const -> int { return index_; }
 
   // Prints the node index.
@@ -376,4 +378,4 @@ class ParseTree::SiblingIterator
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_PARSER_PARSE_TREE_H_
+#endif  // CARBON_TOOLCHAIN_PARSER_PARSE_TREE_H_

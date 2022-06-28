@@ -44,8 +44,8 @@
 // On match failure, Yaml::Values are printed as C++ code that can be used to
 // recreate the value, for easy copy-pasting into test expectations.
 
-#ifndef TOOLCHAIN_COMMON_YAML_TEST_HELPERS_H_
-#define TOOLCHAIN_COMMON_YAML_TEST_HELPERS_H_
+#ifndef CARBON_TOOLCHAIN_COMMON_YAML_TEST_HELPERS_H_
+#define CARBON_TOOLCHAIN_COMMON_YAML_TEST_HELPERS_H_
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -60,10 +60,12 @@
 namespace Carbon::Testing::Yaml {
 
 struct EmptyComparable {
-  friend auto operator==(EmptyComparable, EmptyComparable) -> bool {
+  friend auto operator==(EmptyComparable /*lhs*/, EmptyComparable /*rhs*/)
+      -> bool {
     return true;
   }
-  friend auto operator!=(EmptyComparable, EmptyComparable) -> bool {
+  friend auto operator!=(EmptyComparable /*lhs*/, EmptyComparable /*rhs*/)
+      -> bool {
     return false;
   }
 };
@@ -144,4 +146,4 @@ MATCHER_P(Scalar, value,
 
 }  // namespace Carbon::Testing::Yaml
 
-#endif  // TOOLCHAIN_COMMON_YAML_TEST_HELPERS_H_
+#endif  // CARBON_TOOLCHAIN_COMMON_YAML_TEST_HELPERS_H_

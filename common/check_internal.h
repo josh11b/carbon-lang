@@ -2,8 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef COMMON_CHECK_INTERNAL_H_
-#define COMMON_CHECK_INTERNAL_H_
+#ifndef CARBON_COMMON_CHECK_INTERNAL_H_
+#define CARBON_COMMON_CHECK_INTERNAL_H_
+
+#include <unistd.h>
 
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Signals.h"
@@ -23,18 +25,20 @@ class ExitingStream {
   // Internal type used in macros to dispatch to the `operator|` overload.
   struct Helper {};
 
+  ExitingStream() {
+    // Start all messages with a stack trace. Printing this first ensures the
+    // error message is the last thing written which makes it easier to find. It
+    // also helps ensure we report the most useful stack trace and location
+    // information.
+    llvm::errs() << "Stack trace:\n";
+    llvm::sys::PrintStackTrace(llvm::errs());
+  }
+
   [[noreturn]] ~ExitingStream() {
     llvm_unreachable(
         "Exiting streams should only be constructed by check.h macros that "
         "ensure the special operator| exits the program prior to their "
         "destruction!");
-  }
-
-  // Indicates that the program is exiting due to a bug in the program, rather
-  // than, e.g., invalid input.
-  auto TreatAsBug() -> ExitingStream& {
-    treat_as_bug_ = true;
-    return *this;
   }
 
   // If the bool cast occurs, it's because the condition is false. This supports
@@ -52,7 +56,7 @@ class ExitingStream {
     return *this;
   }
 
-  auto operator<<(AddSeparator /*unused*/) -> ExitingStream& {
+  auto operator<<(AddSeparator /*add_separator*/) -> ExitingStream& {
     separator_ = true;
     return *this;
   }
@@ -60,24 +64,26 @@ class ExitingStream {
   // Low-precedence binary operator overload used in check.h macros to flush the
   // output and exit the program. We do this in a binary operator rather than
   // the destructor to ensure good debug info and backtraces for errors.
-  [[noreturn]] friend auto operator|(Helper /*unused*/, ExitingStream& rhs) {
+  [[noreturn]] friend auto operator|(Helper /*helper*/,
+                                     ExitingStream& /*rhs*/) {
     // Finish with a newline.
     llvm::errs() << "\n";
-    if (rhs.treat_as_bug_) {
-      std::abort();
-    } else {
-      std::exit(-1);
-    }
+    // We assume LLVM's exit handling is installed, which will stack trace on
+    // `std::abort()`. We print a more user friendly stack trace on
+    // construction, but it is still useful to exit the program with
+    // `std::abort()` for integration with debuggers and other tools. We also
+    // want to do any pending cleanups. So we replicate the signal handling here
+    // and unregister LLVM's handlers right before we abort.
+    llvm::sys::RunInterruptHandlers();
+    llvm::sys::unregisterHandlers();
+    std::abort();
   }
 
  private:
   // Whether a separator should be printed if << is used again.
   bool separator_ = false;
-
-  // Whether the program is exiting due to a bug.
-  bool treat_as_bug_ = false;
 };
 
 }  // namespace Carbon::Internal
 
-#endif  // COMMON_CHECK_INTERNAL_H_
+#endif  // CARBON_COMMON_CHECK_INTERNAL_H_
