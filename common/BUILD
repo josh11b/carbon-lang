@@ -149,6 +149,38 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "hashing_constant_search",
+    testonly = 1,
+    srcs = ["hashing_constant_search.cpp"],
+    deps = [
+        ":ostream",
+        "@com_google_absl//absl/random",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_binary(
+    name = "hashing_permute_search",
+    testonly = 1,
+    srcs = ["hashing_permute_search.cpp"],
+    deps = [
+        ":ostream",
+        "@com_google_absl//absl/random",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_binary(
+    name = "hashing_constant_quality",
+    testonly = 1,
+    srcs = ["hashing_constant_quality.cpp"],
+    deps = [
+        ":ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_library(
     name = "indirect_value",
     hdrs = ["indirect_value.h"],
