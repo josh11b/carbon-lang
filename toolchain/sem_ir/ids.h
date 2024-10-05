@@ -26,6 +26,7 @@ struct Specific;
 struct ImportIR;
 struct ImportIRInst;
 struct Interface;
+struct FacetTypeValue;
 struct Impl;
 struct NameScope;
 struct TypeInfo;
@@ -326,6 +327,23 @@ struct InterfaceId : public IdBase, public Printable<InterfaceId> {
 };
 
 constexpr InterfaceId InterfaceId::Invalid = InterfaceId(InvalidIndex);
+
+// The ID of an faceet type value.
+struct FacetTypeValueId : public IdBase, public Printable<FacetTypeValueId> {
+  using ValueType = FacetTypeValue;
+
+  // An explicitly invalid ID.
+  static const FacetTypeValueId Invalid;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "facet type";
+    IdBase::Print(out);
+  }
+};
+
+constexpr FacetTypeValueId FacetTypeValueId::Invalid =
+    FacetTypeValueId(InvalidIndex);
 
 // The ID of an impl.
 struct ImplId : public IdBase, public Printable<ImplId> {

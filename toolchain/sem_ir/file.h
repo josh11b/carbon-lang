@@ -15,6 +15,7 @@
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/entity_name.h"
+#include "toolchain/sem_ir/facet_type.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -121,6 +122,10 @@ class File : public Printable<File> {
   auto interfaces() const -> const ValueStore<InterfaceId>& {
     return interfaces_;
   }
+  auto facet_types() -> ValueStore<FacetTypeId>& { return facet_types_; }
+  auto facet_types() const -> const ValueStore<FacetTypeId>& {
+    return facet_types_;
+  }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
   auto generics() -> GenericStore& { return generics_; }
@@ -208,6 +213,9 @@ class File : public Printable<File> {
 
   // Storage for interfaces.
   ValueStore<InterfaceId> interfaces_;
+
+  // Storage for facet types.
+  ValueStore<FacetTypeId> facet_types_;
 
   // Storage for impls.
   ImplStore impls_;
