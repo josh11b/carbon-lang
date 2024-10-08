@@ -15,7 +15,7 @@
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/entity_name.h"
-#include "toolchain/sem_ir/facet_type.h"
+#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"

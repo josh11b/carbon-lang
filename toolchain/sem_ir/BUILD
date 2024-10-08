@@ -99,7 +99,7 @@ cc_library(
         "copy_on_write_block.h",
         "entity_name.h",
         "entity_with_params_base.h",
-        "facet_type.h",
+        "facet_type_info.h",
         "file.h",
         "function.h",
         "generic.h",
