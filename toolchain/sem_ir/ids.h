@@ -20,14 +20,14 @@ class File;
 class Inst;
 struct EntityName;
 struct Class;
+struct FacetTypeInfo;
 struct Function;
 struct Generic;
 struct Specific;
 struct ImportIR;
 struct ImportIRInst;
-struct Interface;
-struct FacetTypeInfo;
 struct Impl;
+struct Interface;
 struct NameScope;
 struct TypeInfo;
 
