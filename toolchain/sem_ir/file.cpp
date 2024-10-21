@@ -287,6 +287,21 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         }
         break;
       }
+      case CARBON_KIND(FacetType inst): {
+        if (step.index == 0) {
+          out << "<facet type ";
+          steps.push_back(step.Next());
+          FacetTypeInfo facet_type_info =
+              sem_ir.facet_types().Get(inst.facet_type_id);
+          // TODO: also output restrictions from
+          // facet_type_info.requirement_block_id.
+          TypeId type_id = facet_type_info.base_facet_type_id;
+          push_inst_id(sem_ir.types().GetInstId(type_id));
+        } else {
+          out << ">";
+        }
+        break;
+      }
       case CARBON_KIND(FacetTypeAccess inst): {
         // Print `T as type` as simply `T`.
         push_inst_id(inst.facet_id);
@@ -604,6 +619,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ClassType::Kind:
       case CompleteTypeWitness::Kind:
       case ConstType::Kind:
+      case FacetType::Kind:
       case FacetTypeAccess::Kind:
       case FloatLiteral::Kind:
       case FloatType::Kind:

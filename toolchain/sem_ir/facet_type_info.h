@@ -15,7 +15,7 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   InstBlockId requirement_block_id;
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{facet_type: " << base_facet_type_id
+    out << "{base_facet_type: " << base_facet_type_id
         << ", requirements: " << requirement_block_id << "}";
   }
   // TODO: Implement hash and ==

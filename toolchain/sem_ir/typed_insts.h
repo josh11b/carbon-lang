@@ -541,6 +541,18 @@ struct ExportDecl {
   InstId value_id;
 };
 
+// A facet type value.
+struct FacetType {
+  static constexpr auto Kind = InstKind::FacetType.Define<Parse::NodeId>(
+      {.ir_name = "facet_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+  FacetTypeId facet_type_id;
+  // FIXME: does this need a: SpecificId specific_id;?
+};
+
 // Represents accessing the `type` field in a facet value, which is notionally a
 // pair of a type and a witness.
 struct FacetTypeAccess {
