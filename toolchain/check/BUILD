@@ -15,6 +15,7 @@ filegroup(
 cc_library(
     name = "context",
     srcs = [
+        "action.cpp",
         "call.cpp",
         "context.cpp",
         "control_flow.cpp",
@@ -47,8 +48,10 @@ cc_library(
         "subst.cpp",
         "type.cpp",
         "type_completion.cpp",
+        "type_structure.cpp",
     ],
     hdrs = [
+        "action.h",
         "call.h",
         "context.h",
         "control_flow.h",
@@ -87,6 +90,7 @@ cc_library(
         "subst.h",
         "type.h",
         "type_completion.h",
+        "type_structure.h",
     ],
     deps = [
         ":node_stack",

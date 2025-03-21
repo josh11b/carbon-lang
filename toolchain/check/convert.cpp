@@ -11,6 +11,7 @@
 #include "common/map.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/action.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
@@ -1028,67 +1029,52 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     // The value is a type or facet value, so it has a constant value. We get
     // that to unwrap things like NameRef and get to the underlying type or
     // facet value instruction so that we can use `TryGetAs`.
-    auto lookup_inst_id = sem_ir.constant_values().GetConstantInstId(value_id);
+    auto const_value_id = sem_ir.constant_values().GetConstantInstId(value_id);
 
     if (auto facet_access_type_inst =
-            sem_ir.insts().TryGetAs<SemIR::FacetAccessType>(lookup_inst_id)) {
+            sem_ir.insts().TryGetAs<SemIR::FacetAccessType>(const_value_id)) {
       // Conversion from a `FacetAccessType` to a `FacetValue` of the target
       // `FacetType` if the instruction in the `FacetAccessType` is of a
       // `FacetType` that satisfies the requirements of the target `FacetType`.
-      auto facet_value_inst_id = facet_access_type_inst->facet_value_inst_id;
-
       // If the `FacetType` exactly matches the target `FacetType` then we can
       // shortcut and use that value, and avoid impl lookup.
+      auto facet_value_inst_id = facet_access_type_inst->facet_value_inst_id;
       if (sem_ir.insts().Get(facet_value_inst_id).type_id() == target.type_id) {
         return facet_value_inst_id;
       }
-
-      auto lookup_result = LookupImplWitness(
-          context, loc_id, context.constant_values().Get(facet_value_inst_id),
-          context.types().GetConstantId(target.type_id));
-      if (lookup_result.has_value()) {
-        if (lookup_result.has_error_value()) {
-          return SemIR::ErrorInst::SingletonInstId;
-        } else {
-          return AddInst<SemIR::FacetValue>(
-              context, loc_id,
-              {.type_id = target.type_id,
-               .type_inst_id = lookup_inst_id,
-               .witnesses_block_id = lookup_result.inst_block_id()});
-        }
-      }
     }
 
-    if (sem_ir.types().Is<SemIR::FacetType>(
-            sem_ir.insts().Get(lookup_inst_id).type_id())) {
-      // Conversion from a facet value to a `FacetValue` of the target
-      // `FacetType`. We move up to the higher typish level, and convert the
-      // `FacetType` (which is of type TypeType) directly. If the `FacetType`
-      // itself implements the target `FacetType` (`impl Iface1 as Iface2`),
-      // then we will produce a `FacetValue` of the target `FacetType`.
-      lookup_inst_id = context.types().GetInstId(
-          sem_ir.insts().Get(lookup_inst_id).type_id());
-    }
-
-    if (sem_ir.types().Is<SemIR::TypeType>(
-            sem_ir.insts().Get(lookup_inst_id).type_id())) {
-      // Conversion from a type value (which has type `type`) to a facet value
-      // (which has type `FacetType`), if the type satisfies the requirements of
-      // the target `FacetType`, as determined by finding an impl witness. This
-      // binds the value to the `FacetType` with a `FacetValue`.
-      auto lookup_result = LookupImplWitness(
-          context, loc_id, sem_ir.constant_values().Get(lookup_inst_id),
-          sem_ir.types().GetConstantId(target.type_id));
-      if (lookup_result.has_value()) {
-        if (lookup_result.has_error_value()) {
-          return SemIR::ErrorInst::SingletonInstId;
+    // Conversion from a facet value (which has type `FacetType`) or a type
+    // value (which has type `TypeType`) to a facet value. We can do this if the
+    // type satisfies the requirements of the target `FacetType`, as determined
+    // by finding impl witnesses for the target FacetType.
+    auto lookup_result = LookupImplWitness(
+        context, loc_id, sem_ir.constant_values().Get(const_value_id),
+        sem_ir.types().GetConstantId(target.type_id));
+    if (lookup_result.has_value()) {
+      if (lookup_result.has_error_value()) {
+        return SemIR::ErrorInst::SingletonInstId;
+      } else {
+        // We bind the input value to the target `FacetType` with a
+        // `FacetValue`, which requires an instruction of type `TypeType`. So if
+        // we are converting from a facet value, we get its `type` via an extra
+        // `FacetAccessType` instruction.
+        auto type_inst_id = SemIR::InstId::None;
+        if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
+          type_inst_id =
+              AddInst(context, loc_id,
+                      SemIR::FacetAccessType{
+                          .type_id = SemIR::TypeType::SingletonTypeId,
+                          .facet_value_inst_id = const_value_id,
+                      });
         } else {
-          return AddInst<SemIR::FacetValue>(
-              context, loc_id,
-              {.type_id = target.type_id,
-               .type_inst_id = lookup_inst_id,
-               .witnesses_block_id = lookup_result.inst_block_id()});
+          type_inst_id = const_value_id;
         }
+        return AddInst<SemIR::FacetValue>(
+            context, loc_id,
+            {.type_id = target.type_id,
+             .type_inst_id = type_inst_id,
+             .witnesses_block_id = lookup_result.inst_block_id()});
       }
     }
   }
@@ -1176,6 +1162,13 @@ static auto DiagnoseConversionFailureToConstraintValue(Context& context,
   }
 }
 
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::ConvertToValueAction action) -> SemIR::InstId {
+  return Convert(
+      context, loc_id, action.inst_id,
+      {.kind = ConversionTarget::Value, .type_id = action.target_type_id});
+}
+
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
              ConversionTarget target) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
@@ -1244,6 +1237,26 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   expr_id = PerformBuiltinConversion(context, loc_id, expr_id, target);
   if (expr_id == SemIR::ErrorInst::SingletonInstId) {
     return expr_id;
+  }
+
+  // Defer the action if it's dependent. We do this now rather than before
+  // attempting any conversion so that we can still perform builtin conversions
+  // on dependent arguments. This matters for things like converting a
+  // `template T:! SomeInterface` to `type`, where it's important to form a
+  // `FacetAccessType` when checking the template. But when running the action
+  // later, we need to try builtin conversions again, because one may apply that
+  // didn't apply in the template definition.
+  // TODO: Support this for targets other than `Value`.
+  if (sem_ir.insts().Get(expr_id).type_id() != target.type_id &&
+      target.kind == ConversionTarget::Value &&
+      (OperandIsDependent(context, expr_id) ||
+       OperandIsDependent(context, target.type_id))) {
+    return AddDependentActionSplice(
+        context, loc_id,
+        SemIR::ConvertToValueAction{.type_id = SemIR::InstType::SingletonTypeId,
+                                    .inst_id = expr_id,
+                                    .target_type_id = target.type_id},
+        target.type_id);
   }
 
   // If this is not a builtin conversion, try an `ImplicitAs` conversion.
