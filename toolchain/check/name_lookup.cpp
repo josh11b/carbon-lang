@@ -292,7 +292,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
     // TODO: Allow name lookup into classes that are being defined even if they
-    // are notcomplete.
+    // are not complete.
     RequireCompleteType(
         context, context.types().GetTypeIdForTypeConstantId(base_const_id),
         loc_id, [&] {
