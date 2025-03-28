@@ -52,4 +52,11 @@ class C(T:! X) {}
 // with a `FacetAccessType` when evaluating the instruction.
 class D(T:! Y) { adapt C(T); }
 
+// CHECK:STDERR: self_type_facet_value_of_facet_access_type.carbon:[[@LINE+7]]:13: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: fn Test(T:! Y & Z, d: D(T)) {}
+// CHECK:STDERR:             ^~~~~
+// CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface BitAnd {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn Test(T:! Y & Z, d: D(T)) {}
